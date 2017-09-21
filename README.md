@@ -1,5 +1,9 @@
 # 北京市预约挂号统一平台脚本
 
+![](https://img.shields.io/badge/Language-Python-007fc0.svg)
+![](https://img.shields.io/badge/license-GPLv3-000000.svg)
+![](https://img.shields.io/badge/made%20with-%3C3-red.svg)
+
 Copyright (C) 2017
 
 https://bjguahao.0x7c00.cn/
@@ -7,9 +11,9 @@ https://bjguahao.0x7c00.cn/
 **目前还在调试中，没有稳定的版本，欢迎吐槽和试用**
 
 * 本程序用于 [北京市预约挂号统一平台](http://www.bjguahao.gov.cn/) 的挂号，只支持北京地区医院的挂号。
-* 挂号是刚需。帝都有些医院号源紧张，放号瞬间被秒杀一空，遂产生了撸一脚本挂号的念头。说干就干，简单的分析和调试后于16年8月份左右产出第一版，顺利挂上了XXX院运动医学科的号。很开心。
-* 17年2月底的时候，朋友也需要挂一个号，脚本给他改了改，貌似删了重写的？没有仔细看。经过精心的分析和调试，挂了一个专家号。很开心。
-* 17年3月8号，两位热心网友github上发起issues，提出反馈，让我很意外。本来想着这脚本自己写着用就可以了。接到反馈后觉得可以写成一个成熟的软件了。两位热心网友也主动提出改进代码的愿望。很开心。
+* 挂号是刚需。帝都有些医院号源紧张，放号瞬间被秒杀一空，遂产生了撸一脚本挂号的念头。说干就干，简单的分析和调试后于 16 年 8 月份左右产出第一版，顺利挂上了XXX院运动医学科的号。很开心。
+* 17 年 2 月底的时候，朋友也需要挂一个号，脚本给他改了改，貌似删了重写的？没有仔细看。经过精心的分析和调试，挂了一个专家号。很开心。
+* 17 年 3 月 8 号，两位热心网友github上发起issues，提出反馈，让我很意外。本来想着这脚本自己写着用就可以了。接到反馈后觉得可以写成一个成熟的软件了。两位热心网友也主动提出改进代码的愿望。很开心。
 * __还看什么看，来贡献代码__ ;-)
 
 `2017-03-08 17:12:20 breaker`
@@ -17,6 +21,11 @@ https://bjguahao.0x7c00.cn/
 ## 环境
 
 - Python
+
+## 运行
+
+- 默认用法： ```python2 bjguahao.py```
+- 指定配置： ```python2 bjguahao.py -c test.json```
 
 ## 配置文件
 
@@ -27,11 +36,12 @@ https://bjguahao.0x7c00.cn/
     {
         "username":"185xxxxxxx",
         "password":"*******",
-        "date":"2017-02-17",            # 挂号日期
-        "hospitalId":"142",             # 142 北医三院
+        "date":"2017-02-17",            # 挂号日期，当 date='latest' 时，自动挂最新一日
+        "hospitalId":"142",             # 142 北医三院
         "departmentId":"200039602",     # 运动医学科
         "dutyCode":"1",                 # 1:上午  2:下午
         "patientName":"张三",           # 就诊人姓名,可不填,适配多就诊人情况
+        "doctorName":"李时珍",           # 优先选择的专家姓名,可不填
 
 
         "DebugLevel":"info"             # debug / info / error
@@ -49,6 +59,20 @@ https://bjguahao.0x7c00.cn/
 
 开发者请将`config.json`配置文件中的`DebugLevel`参数设置为`debug`
 
+## 加入我们
+
+在使用过程中有任何问题建议，或者贡献代码，请加入交流群
+
+![image](https://github.com/iBreaker/bjguahao/raw/master/img/qq-qun.png)
+
+## 致谢
+
+感谢 [yiqian987](https://github.com/yiqian987) 修改 [issues#27](https://github.com/iBreaker/bjguahao/issues/27)
+
+若遗漏了您，请发邮件通知我 <791628659@qq.com>
+
 ## 协议
+
+![](https://www.gnu.org/graphics/gplv3-127x51.png)
 
 bjguahao 基于 GPL-3.0 协议进行分发和使用，更多信息参见协议文件。

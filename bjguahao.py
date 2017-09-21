@@ -33,14 +33,15 @@ class Config(object):
         self.conf_path = ""
         self.patient_name = ""
         self.patient_id = ""
+        self.doctorName = ""
 
-    def load_conf(self):
+    def load_conf(self, config_path):
         """
         加载配置
         """
 
         try:
-            with open('config.json') as json_file:
+            with open(config_path) as json_file:
                 data = json.load(json_file)
                 data = data[0]
                 self.mobile_no = data["username"]
@@ -50,6 +51,7 @@ class Config(object):
                 self.department_id = data["departmentId"]
                 self.duty_code = data["dutyCode"]
                 self.patient_name = data["patientName"]
+                self.doctorName = data["doctorName"]
 
                 Log.info("配置加载完成")
                 Log.debug("手机号:" + str(self.mobile_no ))
@@ -117,6 +119,9 @@ class Guahao(object):
         department_id = self.config.department_id
         duty_code = self.config.duty_code
         duty_date = self.config.date
+	
+	# log current date
+        Log.debug("当前挂号日期: " + self.config.date)
 
         preload = {
             'hospitalId':hospital_id ,
@@ -141,6 +146,10 @@ class Guahao(object):
 
         self.print_doctor()
 
+        for doctor in self.dutys[::-1]:
+            if doctor["doctorName"] == self.config.doctorName and doctor['remainAvailableNumber']:
+                Log.info(u"选中:" + str(doctor["doctorName"]))
+                return doctor
         for doctor in self.dutys[::-1]:
             if doctor['remainAvailableNumber']:
                 Log.info(u"选中:" + str(doctor["doctorName"]))
@@ -237,13 +246,20 @@ class Guahao(object):
         appoint_day = m.group('appointDay')
 
         today = datetime.date.today()
+	
+	# 优先确认最新可挂号日期
+        self.stop_date = today + datetime.timedelta(days=int(appoint_day))
+        Log.info("今日可挂号到: " + self.stop_date.strftime("%Y-%m-%d"))
+	
+	# 自动挂最新一天的号
+        if self.config.date == 'latest':
+            self.config.date = unicode(self.stop_date.strftime("%Y-%m-%d"))
+            Log.info("当前挂号日期变更为: " + self.config.date)
 
+        # 生成放号时间和程序开始时间
         con_data_str = self.config.date + " " + refresh_time + ":00"
         self.start_time =  datetime.datetime.strptime(con_data_str, '%Y-%m-%d %H:%M:%S') +  datetime.timedelta(days= - int(appoint_day))
-        self.stop_date = today + datetime.timedelta(days=int(appoint_day))
-
         Log.info("放号时间: " + self.start_time.strftime("%Y-%m-%d %H:%M"))
-        Log.info("今日可挂号到: " + self.stop_date.strftime("%Y-%m-%d"))
 
     def get_sms_verify_code(self):
         """获取短信验证码"""
@@ -259,28 +275,32 @@ class Guahao(object):
             Log.error(data["msg"])
             return None
 
-    def run(self):
+    def run(self, config_path):
         """主逻辑"""
 
         config = Config()                       # config对象
-        config.load_conf()                      # 加载配置
+        config.load_conf(config_path)                      # 加载配置
         self.config = config
         self.get_duty_time()
 
 
         self.auth_login()                       # 1. 登陆
-
-        if self.start_time > datetime.datetime.now():
-            seconds =  (self.start_time -  datetime.datetime.now()).total_seconds()
+        curTime = datetime.datetime.now() + datetime.timedelta(seconds=int(time.timezone + 8*60*60)) 
+        if self.start_time > curTime:
+            seconds =  (self.start_time -  curTime).total_seconds()
             Log.info("距离放号时间还有" + str(seconds) + "秒")
             sleep_time = seconds - 60
             if sleep_time > 0:
                 Log.info("程序休眠" + str(sleep_time) + "秒后开始运行")
                 time.sleep(sleep_time)
+	    # 自动重新登录
+	    if sleep_time > 1000:
+		self.auth_login()
 
         doctor = "";
         while True:
             doctor = self.select_doctor()            # 2. 选择医生
+	    self.get_patient_id(doctor)         # 3. 获取病人id
             if doctor == "NoDuty":
                 Log.error("没号了,  亲~")
                 break
@@ -292,12 +312,18 @@ class Guahao(object):
                 if sms_code == None:
                     time.sleep(1)
 
-                self.get_patient_id(doctor)         # 3. 获取病人id
                 result = self.get_it(doctor, sms_code)                 # 4.挂号
                 if result == True:
                     break                                    # 挂号成功
 
 if __name__ == "__main__":
-    Log.load_config()
+    # 生成默认 config 地址
+    config_path = 'config.json'
+
+    # 覆盖 config 地址
+    for i in range(1, len(sys.argv)):
+        if (sys.argv[i] == '-c') & (i+1 < len(sys.argv)):
+            config_path = sys.argv[i+1]
+    Log.load_config(config_path)
     guahao = Guahao()
-    guahao.run()
+    guahao.run(config_path)
